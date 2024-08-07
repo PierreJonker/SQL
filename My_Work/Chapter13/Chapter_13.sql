@@ -1,56 +1,57 @@
--- Chapter 13
-
--- Commonly used string functions
--- Full list at https://www.postgresql.org/docs/current/static/functions-string.html
+-- Chapter 13: Commonly Used String Functions
 
 -- Case formatting
-SELECT upper('Neal7');
-SELECT lower('Randy');
-SELECT initcap('at the end of the day');
+SELECT upper('Neal7'); -- Converts all letters to uppercase: 'NEAL7'
+SELECT lower('Randy'); -- Converts all letters to lowercase: 'randy'
+SELECT initcap('at the end of the day'); -- Capitalizes the first letter of each word: 'At The End Of The Day'
 -- Note initcap's imperfect for acronyms
-SELECT initcap('Practical SQL');
+SELECT initcap('Practical SQL'); -- Capitalizes the first letter of each word: 'Practical Sql'
 
 -- Character Information
-SELECT char_length(' Pat ');
-SELECT length(' Pat ');
-SELECT position(', ' in 'Tan, Bella');
+SELECT char_length(' Pat '); -- Returns the number of characters, including spaces: 5
+SELECT length(' Pat '); -- Returns the number of characters, including spaces: 5
+SELECT position(', ' in 'Tan, Bella'); -- Finds the position of ', ' in the string: 4
 
 -- Removing characters
-SELECT trim('s' from 'socks');
-SELECT trim(trailing 's' from 'socks');
-SELECT trim(' Pat ');
-SELECT char_length(trim(' Pat ')); -- note the length change
-SELECT ltrim('socks', 's');
-SELECT rtrim('socks', 's');
+SELECT trim('s' from 'socks'); -- Removes 's' from both ends: 'ock'
+SELECT trim(trailing 's' from 'socks'); -- Removes 's' from the end: 'sock'
+SELECT trim(' Pat '); -- Removes spaces from both ends: 'Pat'
+SELECT char_length(trim(' Pat ')); -- Note the length change: 3
+SELECT ltrim('socks', 's'); -- Removes 's' from the start: 'ocks'
+SELECT rtrim('socks', 's'); -- Removes 's' from the end: 'sock'
 
 -- Extracting and replacing characters
-SELECT left('703-555-1212', 3);
-SELECT right('703-555-1212', 8);
-**
-
+SELECT left('703-555-1212', 3); -- Extracts the leftmost 3 characters: '703'
+SELECT right('703-555-1212', 8); -- Extracts the rightmost 8 characters: '555-1212'
 
 -- Table 13-2: Regular Expression Matching Examples
 
--- Any character one or more times
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '.+');
--- One or two digits followed by a space and p.m.
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\d{1,2} (?:a.m.|p.m.)');
--- One or more word characters at the start
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '^\w+');
--- One or more word characters followed by any character at the end.
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\w+.$');
--- The words May or June
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from 'May|June');
--- Four digits
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\d{4}');
--- May followed by a space, digit, comma, space, and four digits.
-SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from 'May \d, \d{4}');
+-- Using regex to extract specific patterns
 
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '.+'); 
+-- Extracts everything after the first character: 'The game starts at 7 p.m. on May 2, 2019.'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\d{1,2} (?:a.m.|p.m.)'); 
+-- Matches one or two digits followed by a space and 'p.m.': '7 p.m.'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '^\w+'); 
+-- Matches one or more word characters at the start: 'The'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\w+.$'); 
+-- Matches one or more word characters followed by any character at the end: '2019.'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from 'May|June'); 
+-- Matches 'May' or 'June': 'May'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from '\d{4}'); 
+-- Matches four digits: '2019'
+
+SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from 'May \d, \d{4}'); 
+-- Matches 'May' followed by a space, digit, comma, space, and four digits: 'May 2, 2019'
 
 -- Turning Text to Data with Regular Expression Functions
 
 -- Listing 13-2: Creating and loading the crime_reports table
--- Data from https://sheriff.loudoun.gov/dailycrime
 
 CREATE TABLE crime_reports (
     crime_id bigserial PRIMARY KEY,
@@ -64,42 +65,54 @@ CREATE TABLE crime_reports (
     original_text text NOT NULL
 );
 
+-- Loading data from a CSV file
 COPY crime_reports (original_text)
 FROM 'C:\Bootcamp\Java_Bootcamp\SQL\My_Work\Chapter13\crime_reports.csv'
 WITH (FORMAT CSV, HEADER OFF, QUOTE '"');
 
+-- Retrieve original text data
 SELECT original_text FROM crime_reports;
 
 -- Listing 13-3: Using regexp_match() to find the first date
 SELECT crime_id,
        regexp_match(original_text, '\d{1,2}\/\d{1,2}\/\d{2}')
 FROM crime_reports;
+-- Extracts the first date in the format MM/DD/YY
 
 -- Listing 13-4: Using the regexp_matches() function with the 'g' flag
 SELECT crime_id,
        regexp_matches(original_text, '\d{1,2}\/\d{1,2}\/\d{2}', 'g')
 FROM crime_reports;
+-- Extracts all dates in the format MM/DD/YY
 
 -- Listing 13-5: Using regexp_match() to find the second date
 -- Note that the result includes an unwanted hyphen
 SELECT crime_id,
        regexp_match(original_text, '-\d{1,2}\/\d{1,2}\/\d{1,2}')
 FROM crime_reports;
+-- Extracts the second date with a leading hyphen
 
 -- Listing 13-6: Using a capture group to return only the date
 -- Eliminates the hyphen
 SELECT crime_id,
        regexp_match(original_text, '-(\d{1,2}\/\d{1,2}\/\d{1,2})')
 FROM crime_reports;
+-- Uses capture group to extract the second date without the hyphen
 
 -- Listing 13-7: Matching case number, date, crime type, and city
 
 SELECT
     regexp_match(original_text, '(?:C0|SO)[0-9]+') AS case_number,
+    -- Matches case numbers starting with 'C0' or 'SO'
+
     regexp_match(original_text, '\d{1,2}\/\d{1,2}\/\d{2}') AS date_1,
+    -- Matches the first date in the format MM/DD/YY
+
     regexp_match(original_text, '\n(?:\w+ \w+|\w+)\n(.*):') AS crime_type,
-    regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\n(\w+ \w+|\w+)\n')
-        AS city
+    -- Matches crime type
+
+    regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\n(\w+ \w+|\w+)\n') AS city
+    -- Matches city names
 FROM crime_reports;
 
 -- Bonus: Get all parsed elements at once
@@ -110,16 +123,29 @@ SELECT crime_id,
             THEN regexp_match(original_text, '-(\d{1,2}\/\d{1,2}\/\d{1,2})')
             ELSE NULL
             END AS date_2,
+       -- Extracts date_2 conditionally if exists
+
        regexp_match(original_text, '\/\d{2}\n(\d{4})') AS hour_1,
        CASE WHEN EXISTS (SELECT regexp_matches(original_text, '\/\d{2}\n\d{4}-(\d{4})'))
             THEN regexp_match(original_text, '\/\d{2}\n\d{4}-(\d{4})')
             ELSE NULL
             END AS hour_2,
+       -- Extracts hour_2 conditionally if exists
+
        regexp_match(original_text, 'hrs.\n(\d+ .+(?:Sq.|Plz.|Dr.|Ter.|Rd.))') AS street,
+       -- Matches street
+
        regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\n(\w+ \w+|\w+)\n') AS city,
+       -- Matches city
+
        regexp_match(original_text, '\n(?:\w+ \w+|\w+)\n(.*):') AS crime_type,
+       -- Matches crime type
+
        regexp_match(original_text, ':\s(.+)(?:C0|SO)') AS description,
+       -- Matches description
+
        regexp_match(original_text, '(?:C0|SO)[0-9]+') AS case_number
+       -- Matches case number
 FROM crime_reports;
 
 -- Listing 13-8: Retrieving a value from within an array
@@ -128,11 +154,13 @@ SELECT
     crime_id,
     (regexp_match(original_text, '(?:C0|SO)[0-9]+'))[1]
         AS case_number
+-- Extracts the first element from the matched array as case_number
 FROM crime_reports;
 
 -- Listing 13-9: Updating the crime_reports date_1 column
 
 SET datestyle = 'ISO, MDY';
+-- Sets the date style for consistent date formatting
 
 UPDATE crime_reports
 SET date_1 = 
@@ -142,6 +170,7 @@ SET date_1 =
     (regexp_match(original_text, '\/\d{2}\n(\d{4})'))[1] 
         ||' US/Eastern'
 )::timestamptz;
+-- Updates date_1 by combining matched date and time elements
 
 SELECT crime_id,
        date_1,
@@ -170,7 +199,6 @@ SET date_1 =
           (regexp_match(original_text, '\/\d{2}\n\d{4}-(\d{4})'))[1] 
               ||' US/Eastern'
           )::timestamptz 
-
     -- if there is both a second date and second hour
         WHEN (SELECT regexp_match(original_text, '-(\d{1,2}\/\d{1,2}\/\d{1,2})') IS NOT NULL)
               AND (SELECT regexp_match(original_text, '\/\d{2}\n\d{4}-(\d{4})') IS NOT NULL)
@@ -189,6 +217,7 @@ SET date_1 =
     crime_type = (regexp_match(original_text, '\n(?:\w+ \w+|\w+)\n(.*):'))[1],
     description = (regexp_match(original_text, ':\s(.+)(?:C0|SO)'))[1],
     case_number = (regexp_match(original_text, '(?:C0|SO)[0-9]+'))[1];
+-- Updates all columns with extracted and formatted data
 
 -- Listing 13-11: Viewing selected crime data
 
@@ -197,6 +226,7 @@ SELECT date_1,
        city,
        crime_type
 FROM crime_reports;
+-- Retrieves selected fields from crime_reports
 
 -- Listing 13-12: Using regular expressions in a WHERE clause
 
@@ -204,25 +234,29 @@ SELECT geo_name
 FROM us_counties_2010
 WHERE geo_name ~* '(.+lade.+|.+lare.+)'
 ORDER BY geo_name;
+-- Matches county names containing 'lade' or 'lare'
 
 SELECT geo_name
 FROM us_counties_2010
 WHERE geo_name ~* '.+ash.+' AND geo_name !~ 'Wash.+'
 ORDER BY geo_name;
-
+-- Matches county names containing 'ash' but not starting with 'Wash'
 
 -- Listing 13-13: Regular expression functions to replace and split
 
 SELECT regexp_replace('05/12/2018', '\d{4}', '2017');
+-- Replaces the year with '2017'
 
 SELECT regexp_split_to_table('Four,score,and,seven,years,ago', ',');
+-- Splits the string into rows by commas
 
 SELECT regexp_split_to_array('Phil Mike Tony Steve', ' ');
+-- Splits the string into an array by spaces
 
 -- Listing 13-14: Finding an array length
 
 SELECT array_length(regexp_split_to_array('Phil Mike Tony Steve', ' '), 1);
-
+-- Finds the length of the resulting array
 
 -- FULL TEXT SEARCH
 
@@ -234,23 +268,22 @@ SELECT array_length(regexp_split_to_array('Phil Mike Tony Steve', ' '), 1);
 -- Listing 13-15: Converting text to tsvector data
 
 SELECT to_tsvector('I am walking across the sitting room to sit with you.');
+-- Converts text into tsvector type for full-text search
 
 -- Listing 13-16: Converting search terms to tsquery data
 
 SELECT to_tsquery('walking & sitting');
+-- Converts search terms into tsquery type with AND condition
 
 -- Listing 13-17: Querying a tsvector type with a tsquery
 
 SELECT to_tsvector('I am walking across the sitting room') @@ to_tsquery('walking & sitting');
+-- Checks if tsvector contains the tsquery terms (returns true)
 
 SELECT to_tsvector('I am walking across the sitting room') @@ to_tsquery('walking & running');
+-- Checks if tsvector contains the tsquery terms (returns false)
 
 -- Listing 13-18: Creating and filling the president_speeches table
-
--- Sources:
--- https://archive.org/details/State-of-the-Union-Addresses-1945-2006
--- http://www.presidency.ucsb.edu/ws/index.php
--- https://www.eisenhower.archives.gov/all_about_ike/speeches.html
 
 CREATE TABLE president_speeches (
     sotu_id serial PRIMARY KEY,
@@ -264,17 +297,21 @@ CREATE TABLE president_speeches (
 COPY president_speeches (president, title, speech_date, speech_text)
 FROM 'C:\Bootcamp\Java_Bootcamp\SQL\My_Work\Chapter13\sotu-1946-1977.csv'
 WITH (FORMAT CSV, DELIMITER '|', HEADER OFF, QUOTE '@');
+-- Loads data from a CSV file
 
 SELECT * FROM president_speeches;
+-- Retrieves all data from the president_speeches table
 
 -- Listing 13-19: Converting speeches to tsvector in the search_speech_text column
 
 UPDATE president_speeches
 SET search_speech_text = to_tsvector('english', speech_text);
+-- Converts speech_text to tsvector and updates search_speech_text column
 
 -- Listing 13-20: Creating a GIN index for text search
 
 CREATE INDEX search_idx ON president_speeches USING gin(search_speech_text);
+-- Creates a GIN index on search_speech_text for efficient text search
 
 -- Listing 13-21: Finding speeches containing the word "Vietnam"
 
@@ -282,6 +319,7 @@ SELECT president, speech_date
 FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('Vietnam')
 ORDER BY speech_date;
+-- Retrieves speeches containing 'Vietnam', ordered by date
 
 -- Listing 13-22: Displaying search results with ts_headline()
 
@@ -295,6 +333,7 @@ SELECT president,
                     MaxFragments=1')
 FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('Vietnam');
+-- Highlights occurrences of 'Vietnam' in speeches with specified formatting
 
 -- Listing 13-23: Finding speeches with the word "transportation" but not "roads"
 
@@ -308,6 +347,7 @@ SELECT president,
                     MaxFragments=1')
 FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('transportation & !roads');
+-- Highlights 'transportation' but excludes 'roads' from results
 
 -- Listing 13-24: Find speeches where "defense" follows "military"
 
@@ -321,6 +361,7 @@ SELECT president,
                     MaxFragments=1')
 FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('military <-> defense');
+-- Highlights where 'defense' follows 'military' in speeches
 
 -- Bonus: Example with a distance of 2:
 SELECT president,
@@ -333,6 +374,7 @@ SELECT president,
                     MaxFragments=2')
 FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('military <2> defense');
+-- Highlights where 'defense' appears within two words of 'military'
 
 -- Listing 13-25: Scoring relevance with ts_rank()
 
@@ -344,6 +386,7 @@ FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('war & security & threat & enemy')
 ORDER BY score DESC
 LIMIT 5;
+-- Scores speeches based on relevance to specified terms, orders by score
 
 -- Listing 13-26: Normalizing ts_rank() by speech length
 
@@ -356,7 +399,7 @@ FROM president_speeches
 WHERE search_speech_text @@ to_tsquery('war & security & threat & enemy')
 ORDER BY score DESC
 LIMIT 5;
-
+-- Normalizes relevance score by speech length, orders by score
 
 -------------------------------------------------------------
 -- Chapter 13: Mining Text to Find Meaningful Data
@@ -372,13 +415,16 @@ LIMIT 5;
 -- PostgreSQL regexp_replace() function:
 
 SELECT replace('Williams, Sr.', ', ', ' ');
+-- Replaces ', ' with a space
+
 SELECT regexp_replace('Williams, Sr.', ', ', ' ');
+-- Replaces ', ' with a space using regex
 
 -- Answer: To capture just the suffixes, search for characters after a comma
 -- and space and place those inside a match group:
 
 SELECT (regexp_match('Williams, Sr.', '.*, (.*)'))[1];
-
+-- Extracts the suffix from the name
 
 -- 2. Using any one of the State of the Union addresses, count the number of
 -- unique words that are five characters or more. Hint: you can use
@@ -404,6 +450,7 @@ FROM word_list
 WHERE length(word) >= 5
 GROUP BY cleaned_word
 ORDER BY count(*) DESC;
+-- Splits speech text into words, removes punctuation, counts words >= 5 characters
 
 -- Note: This query uses a Common Table Expression to first separate each word
 -- in the text into a separate row in a table named word_list. Then the SELECT
@@ -411,7 +458,6 @@ ORDER BY count(*) DESC;
 -- several nested replace functions remove commas, periods, and colons. Second,
 -- all words are converted to lowercase so that when we count we group words
 -- that may appear with various cases (e.g., "Military" and "military").
-
 
 -- 3. Rewrite the query in Listing 13-25 using the ts_rank_cd() function
 -- instead of ts_rank(). According to th PostgreSQL documentation, ts_rank_cd()
@@ -432,5 +478,4 @@ FROM president_speeches,
 WHERE search_speech_text @@ search_query
 ORDER BY rank_score DESC
 LIMIT 5;
-
-
+-- Uses ts_rank_cd() to score speeches, ordering by cover density
